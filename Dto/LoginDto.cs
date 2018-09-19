@@ -9,6 +9,5 @@ namespace server.Dto
     {
         public string Usuario { set; get; }
         public string Password { set; get; }
-        public string Token { set; get; }
     }
 }

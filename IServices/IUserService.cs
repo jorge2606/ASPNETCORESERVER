@@ -10,6 +10,9 @@ namespace server.IServices
     public interface IUserService
     {
         User Authenticate(string username, string password);
+        void Update(User user);
+        void Delete(Guid id);
+        User Create(User user, string password);
     }
     
 }

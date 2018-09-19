@@ -9,6 +9,7 @@ using server.Extensions;
 using server.IServices;
 using server.Services;
 using server.Models;
+using AutoMapper;
 using System;
 using System.Linq;
 using System.Text;
@@ -36,6 +37,7 @@ namespace server
             services.AddMvc(
                 options => options.Filters.Add(new CorsAuthorizationFilterFactory(_defaultCorsPolicyName))
             );
+            services.AddAutoMapper();
 
             services.AddCors(
                options => options.AddPolicy(

@@ -10,6 +10,9 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authorization;
+using AutoMapper;
+using server.Helpers.WebApi.Helpers;
 
 namespace server.Controllers
 {
@@ -19,16 +22,19 @@ namespace server.Controllers
         private readonly DataContext _context;
         private IUserService _userService;
         private readonly IConfiguration _configuration;
+        private IMapper _mapper;
 
-        public UserController(DataContext context, IUserService userService,IConfiguration configuration)
+        public UserController(DataContext context, IUserService userService,IConfiguration configuration,
+            IMapper mapper)
         {
             _context = context;
             _userService = userService;
             _configuration = configuration;
+            _mapper = mapper;
         }
 
         [HttpPost]
-        public void Save([FromBody]UserDto userDto)
+        public void Save([FromBody]SaveUserDto userDto)
         {
             _context.AllUsers.Add(new User
             {
@@ -65,29 +71,82 @@ namespace server.Controllers
                 };
                 var token = tokenHandler.CreateToken(tokenDescriptor);
                 u.Token = tokenHandler.WriteToken(token);
+                u.Password = "";
             }
-            u.Password = "";
+            
             return u;
 
             //
         }
 
         [HttpGet("getall")]
+        [Authorize]
         public ActionResult<List<User>> GetAll()
         {
             return _context.AllUsers.ToList();
         }
 
-        [HttpGet("getbyid/{id}/")]
-        public ActionResult<User> GetById(long id)
+        [HttpGet("getbyid/{id}")]
+        [Authorize]
+        public ActionResult<SaveUserDto> GetById(Guid id)
         {
-            var item = _context.AllUsers.Find(id);
-            if (item == null)
+            var user = _context.AllUsers.Find(id);
+            if (user == null)
             {
-                return NotFound();
+                return null;
             }
 
-            return item;
+            return _mapper.Map<SaveUserDto>(user);
         }
+
+        [AllowAnonymous]
+        [HttpPost("register")]
+        public IActionResult Register([FromBody]SaveUserDto userDto)
+        {
+            // map dto to entity
+            var user = _mapper.Map<User>(userDto);
+
+            try
+            {
+                // save 
+                _userService.Create(user, userDto.Password);
+                return Ok();
+            }
+            catch (AppException ex)
+            {
+                // return error message if there was an exception
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPut]
+        [Authorize]
+        public IActionResult Update([FromBody]SaveUserDto userDto)
+        {
+            // map dto to entity and set id
+            var user = _mapper.Map<User>(userDto);
+            user.Id = userDto.Id;
+
+            try
+            {
+                // save 
+                _userService.Update(user);
+                return Ok();
+            }
+            catch (AppException ex)
+            {
+                // return error message if there was an exception
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize]
+        public IActionResult Delete(Guid id)
+        {
+            _userService.Delete(id);
+            return Ok();
+        }
+
     }
 }
