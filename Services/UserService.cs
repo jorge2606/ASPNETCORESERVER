@@ -57,7 +57,6 @@ namespace server.Services
             // update user properties
             user.Dni = userParam.Dni;
             user.Usuario = userParam.Usuario;
-            user.Password = userParam.Password;
 
             // update password if it was entered
             if (!string.IsNullOrWhiteSpace(userParam.Password))
@@ -67,6 +66,8 @@ namespace server.Services
 
                 user.PasswordHash = passwordHash;
                 user.PasswordSalt = passwordSalt;
+                //modifico la password
+                user.Password = userParam.Password;
             }
 
             _context.AllUsers.Update(user);
@@ -108,7 +109,7 @@ namespace server.Services
 
         public User Create(User user, string password)
         {
-            
+            user.Id = Guid.NewGuid();
             // validation
             if (string.IsNullOrWhiteSpace(password))
                 throw new AppException("Password is required");

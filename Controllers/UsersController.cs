@@ -13,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using AutoMapper;
 using server.Helpers.WebApi.Helpers;
+using server.Helpers;
 
 namespace server.Controllers
 {
@@ -148,5 +149,26 @@ namespace server.Controllers
             return Ok();
         }
 
+        public IQueryable<User> queryableUser()
+        {
+            var usersPaginator = _context.AllUsers.OrderBy(x => x.Usuario);
+            return usersPaginator;
+        }
+
+        [HttpGet("page/{page}")]
+        public PagedResult<User> userPagination(int? page)
+        {
+            const int pageSize = 2;
+            var queryPaginator = queryableUser();
+
+            var result = queryPaginator.Skip((page ?? 0) * pageSize)
+                                          .Take(pageSize)
+                                          .ToList();
+            return new PagedResult<User>
+            {
+                List = result,
+                TotalRecords = queryPaginator.Count()
+            };
+        }
     }
 }

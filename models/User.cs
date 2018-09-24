@@ -1,7 +1,8 @@
+using Microsoft.AspNetCore.Identity;
 using System;
 
 namespace server.Models {
-    public class User{
+    public class User : IdentityUser{
         public Guid Id { get; set; } 
         public int Dni { set; get; }
         public string Usuario { set; get; }

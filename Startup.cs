@@ -15,6 +15,7 @@ using System.Linq;
 using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Identity;
 
 namespace server
 {
@@ -78,6 +79,9 @@ namespace server
                 };
             });
 
+            services.AddIdentity<User, IdentityRole>()
+             .AddEntityFrameworkStores<DataContext>()
+             .AddDefaultTokenProviders();
             // configure DI for application services
             services.AddScoped<IUserService, UserService>();
         }
