@@ -21,7 +21,7 @@ namespace server.Services
 
         public User Authenticate(string username, string password)
         {
-            var user = _context.AllUsers.SingleOrDefault(x => x.Usuario == username);
+            var user = _context.Users.SingleOrDefault(x => x.Usuario == username);
             // check if username exists
             if (user == null)
                 return null;
@@ -35,14 +35,14 @@ namespace server.Services
 
         public void Delete(Guid id)
         {
-            var user = _context.AllUsers.Find(id);
-            _context.AllUsers.Remove(user);
+            var user = _context.Users.Find(id);
+            _context.Users.Remove(user);
             _context.SaveChanges();
         }
 
         public void Update(User userParam)
         {
-            var user = _context.AllUsers.Find(userParam.Id);
+            var user = _context.Users.Find(userParam.Id);
 
             if (user == null)
                 throw new AppException("User not found");
@@ -50,7 +50,7 @@ namespace server.Services
             if (userParam.Usuario != user.Usuario)
             {
                 // username has changed so check if the new username is already taken
-                if (_context.AllUsers.Any(x => x.Usuario == userParam.Usuario))
+                if (_context.Users.Any(x => x.Usuario == userParam.Usuario))
                     throw new AppException("El usuario " + userParam.Usuario + " ya existe en la db.");
             }
 
@@ -70,7 +70,7 @@ namespace server.Services
                 user.Password = userParam.Password;
             }
 
-            _context.AllUsers.Update(user);
+            _context.Users.Update(user);
             _context.SaveChanges();
         }
 
@@ -114,7 +114,7 @@ namespace server.Services
             if (string.IsNullOrWhiteSpace(password))
                 throw new AppException("Password is required");
 
-            if (_context.AllUsers.Any(x => x.Usuario == user.Usuario))
+            if (_context.Users.Any(x => x.Usuario == user.Usuario))
                 throw new AppException("Username \"" + user.Usuario + "\" is already taken");
 
             byte[] passwordHash, passwordSalt;
@@ -123,7 +123,7 @@ namespace server.Services
             user.PasswordHash = passwordHash;
             user.PasswordSalt = passwordSalt;
 
-            _context.AllUsers.Add(user);
+            _context.Users.Add(user);
             _context.SaveChanges();
 
             return user;

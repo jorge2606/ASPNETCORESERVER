@@ -1,11 +1,12 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System;
+
 namespace server.Models
 {
-    public class DataContext : IdentityDbContext<User>
+    public class DataContext : IdentityDbContext<User, Role, Guid>
     {
-        
+
         public DataContext(DbContextOptions<DataContext> ConnectionStrings)
             : base(ConnectionStrings)
         {
@@ -14,11 +15,5 @@ namespace server.Models
         {
             base.OnModelCreating(builder);
         }
-        public DbSet<User> AllUsers { get; set; }
-    }
-
-    public class AppIdentityRole : IdentityRole
-    {
-
     }
 }

@@ -37,7 +37,7 @@ namespace server.Controllers
         [HttpPost]
         public void Save([FromBody]SaveUserDto userDto)
         {
-            _context.AllUsers.Add(new User
+            _context.Users.Add(new User
             {
                 Id = Guid.NewGuid(),
                 Dni = userDto.Dni,
@@ -81,17 +81,16 @@ namespace server.Controllers
         }
 
         [HttpGet("getall")]
-        [Authorize]
         public ActionResult<List<User>> GetAll()
         {
-            return _context.AllUsers.ToList();
+            return _context.Users.ToList();
         }
 
         [HttpGet("getbyid/{id}")]
         [Authorize]
         public ActionResult<SaveUserDto> GetById(Guid id)
         {
-            var user = _context.AllUsers.Find(id);
+            var user = _context.Users.Find(id);
             if (user == null)
             {
                 return null;
@@ -151,7 +150,7 @@ namespace server.Controllers
 
         public IQueryable<User> queryableUser()
         {
-            var usersPaginator = _context.AllUsers.OrderBy(x => x.Usuario);
+            var usersPaginator = _context.Users.OrderBy(x => x.Usuario);
             return usersPaginator;
         }
 

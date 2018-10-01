@@ -79,7 +79,7 @@ namespace server
                 };
             });
 
-            services.AddIdentity<User, IdentityRole>()
+            services.AddIdentity<User, Role>()
              .AddEntityFrameworkStores<DataContext>()
              .AddDefaultTokenProviders();
             // configure DI for application services
