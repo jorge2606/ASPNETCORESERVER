@@ -26,7 +26,7 @@ namespace server.Dto
 
             permissions.Add(new ClaimPermissionDto()
             {
-                Text = "Users",
+                Text = "Usuarios",
                 Value = "",
                 Children = new List<ClaimPermissionDto>
                 {
@@ -52,6 +52,38 @@ namespace server.Dto
                         Value = "user.view"
                     }
                 }
+
+            });
+
+            permissions.Add(new ClaimPermissionDto()
+            {
+                Text = "Productos",
+                Value = "",
+                Children = new List<ClaimPermissionDto>
+                {
+                    new ClaimPermissionDto()
+                    {
+                        Text  = "Create",
+                        Value = "productos.create"
+
+                    },
+                    new ClaimPermissionDto()
+                    {
+                        Text  = "Edit",
+                        Value = "productos.edit"
+                    },
+                    new ClaimPermissionDto()
+                    {
+                        Text  = "Delete",
+                        Value = "productos.delete"
+                    },
+                    new ClaimPermissionDto()
+                    {
+                        Text  = "View",
+                        Value = "productos.view"
+                    }
+                }
+
             });
 
             return permissions;

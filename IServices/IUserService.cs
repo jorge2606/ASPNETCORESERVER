@@ -1,18 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading.Tasks;
+using server.Dto;
 using server.Models;
+using server.ServiceResult;
 
 namespace server.IServices
 {
 
     public interface IUserService
     {
-        User Authenticate(string username, string password);
-        void Update(User user);
+        UserDto Authenticate(string username, string password);
+        void Update(SaveUserDto user);
         void Delete(Guid id);
-        User Create(User user, string password);
+        Task<ServiceResult<string>> Register(SaveUserDto model);
+        Task UpdateUserRole(Guid idUser, Guid id);
     }
     
 }

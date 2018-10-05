@@ -14,6 +14,9 @@ using Microsoft.AspNetCore.Authorization;
 using AutoMapper;
 using server.Helpers.WebApi.Helpers;
 using server.Helpers;
+using Microsoft.AspNetCore.Identity;
+using System.Threading.Tasks;
+using server.Identity;
 
 namespace server.Controllers
 {
@@ -25,7 +28,7 @@ namespace server.Controllers
         private readonly IConfiguration _configuration;
         private IMapper _mapper;
 
-        public UserController(DataContext context, IUserService userService,IConfiguration configuration,
+        public UserController(DataContext context, IUserService userService, IConfiguration configuration,
             IMapper mapper)
         {
             _context = context;
@@ -34,47 +37,30 @@ namespace server.Controllers
             _mapper = mapper;
         }
 
+        [HttpPost("SaveRolUser")]
+        [AllowAnonymous]
+        public async Task<ActionResult> SaveRolUser([FromBody]RoleUserDto rolUser)
+        {
+            await _userService.UpdateUserRole(rolUser.UserId, rolUser.RolId);
+            return Ok(rolUser);
+        }
+
         [HttpPost]
         public void Save([FromBody]SaveUserDto userDto)
         {
             _context.Users.Add(new User
             {
                 Id = Guid.NewGuid(),
-                Dni = userDto.Dni,
-                Usuario = userDto.Usuario,
-                Password = userDto.Password,
-                Token = "2321321"
+                Dni = userDto.Dni
             });
             _context.SaveChanges();
         }
 
         [HttpPost("Auth")]
-        public ActionResult<User> Authentication([FromBody]LoginDto p_LoginDto)
+        public ActionResult<UserDto> Authentication([FromBody]LoginDto p_LoginDto)
         {
             var u = _userService.Authenticate(p_LoginDto.Usuario, p_LoginDto.Password);
-            
-            if (u != null)
-            {
-                // authentication successful so generate jwt token
-                var tokenHandler = new JwtSecurityTokenHandler();
 
-                //Settings
-                string set = _configuration.GetSection("AppSettings").GetSection("Secret").Value; 
-                var key = Encoding.ASCII.GetBytes(set);
-                var tokenDescriptor = new SecurityTokenDescriptor
-                {
-                    Subject = new ClaimsIdentity(new Claim[]
-                    {
-                    new Claim(ClaimTypes.Name, u.Id.ToString(), ClaimTypes.SerialNumber, u.Dni.ToString())
-                    }),
-                    Expires = DateTime.UtcNow.AddDays(7),
-                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-                };
-                var token = tokenHandler.CreateToken(tokenDescriptor);
-                u.Token = tokenHandler.WriteToken(token);
-                u.Password = "";
-            }
-            
             return u;
 
             //
@@ -86,7 +72,27 @@ namespace server.Controllers
             return _context.Users.ToList();
         }
 
+        [AllowAnonymous]
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody]SaveUserDto userDto)
+        {
+            var result = await _userService.Register(userDto);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+
+            UserAuthenticationDto ObjToken = new UserAuthenticationDto
+            {
+                Token = result.Response
+            };
+
+            return Ok(ObjToken);
+        }
+
         [HttpGet("getbyid/{id}")]
+        //[Route]
         [Authorize]
         public ActionResult<SaveUserDto> GetById(Guid id)
         {
@@ -97,26 +103,6 @@ namespace server.Controllers
             }
 
             return _mapper.Map<SaveUserDto>(user);
-        }
-
-        [AllowAnonymous]
-        [HttpPost("register")]
-        public IActionResult Register([FromBody]SaveUserDto userDto)
-        {
-            // map dto to entity
-            var user = _mapper.Map<User>(userDto);
-
-            try
-            {
-                // save 
-                _userService.Create(user, userDto.Password);
-                return Ok();
-            }
-            catch (AppException ex)
-            {
-                // return error message if there was an exception
-                return BadRequest(new { message = ex.Message });
-            }
         }
 
         [HttpPut]
@@ -130,7 +116,7 @@ namespace server.Controllers
             try
             {
                 // save 
-                _userService.Update(user);
+                // _userService.Update(user);
                 return Ok();
             }
             catch (AppException ex)
@@ -140,34 +126,35 @@ namespace server.Controllers
             }
         }
 
-        [HttpDelete("{id}")]
-        [Authorize]
-        public IActionResult Delete(Guid id)
-        {
-            _userService.Delete(id);
-            return Ok();
-        }
+        /*     [HttpDelete("{id}")]
+             [Authorize]
+             public IActionResult Delete(Guid id)
+             {
+                 _userService.Delete(id);
+                 return Ok();
+             }
+             */
+             public IQueryable<User> queryableUser()
+             {
+                 var usersPaginator = _context.Users.OrderBy(x => x.UserName);
+                 return usersPaginator;
+             }
+             
+             [HttpGet("page/{page}")]
+             public PagedResult<User> userPagination(int? page)
+             {
+                 const int pageSize = 2;
+                 var queryPaginator = queryableUser();
 
-        public IQueryable<User> queryableUser()
-        {
-            var usersPaginator = _context.Users.OrderBy(x => x.Usuario);
-            return usersPaginator;
-        }
-
-        [HttpGet("page/{page}")]
-        public PagedResult<User> userPagination(int? page)
-        {
-            const int pageSize = 2;
-            var queryPaginator = queryableUser();
-
-            var result = queryPaginator.Skip((page ?? 0) * pageSize)
-                                          .Take(pageSize)
-                                          .ToList();
-            return new PagedResult<User>
-            {
-                List = result,
-                TotalRecords = queryPaginator.Count()
-            };
-        }
+                 var result = queryPaginator.Skip((page ?? 0) * pageSize)
+                                               .Take(pageSize)
+                                               .ToList();
+                 return new PagedResult<User>
+                 {
+                     List = result,
+                     TotalRecords = queryPaginator.Count()
+                 };
+             }
     }
+
 }

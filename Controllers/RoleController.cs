@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using server.Dto;
 using server.Models;
+using AutoMapper;
 
 namespace server.Controllers
 {
@@ -17,13 +18,25 @@ namespace server.Controllers
     public class RoleController : ControllerBase
     {
         private readonly RoleManager<Role> _roleManager;
+        private readonly IMapper _mapper;
 
-        public RoleController(RoleManager<Role> roleManager)
+        public RoleController(RoleManager<Role> roleManager, IMapper mapper)
         {
             _roleManager = roleManager;
+            _mapper = mapper;
+        }
+       
+
+        //Obtener roles unicamente
+
+        [HttpGet("AllRoles")]
+        [AllowAnonymous]
+        public ActionResult<List<RoleDto>> getAllRoles()
+        {
+            return _roleManager.Roles.Select(_mapper.Map<RoleDto>).ToList();
         }
 
-        [HttpGet("getall")]
+        [HttpGet("getallClaims")]
         [AllowAnonymous]
         public async Task<ActionResult<List<RoleClaimPermissionDto>>> GetAllRoleClaims(Guid id)
         {

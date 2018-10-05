@@ -16,6 +16,7 @@ using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Identity;
+using server.Identity;
 
 namespace server
 {
@@ -80,8 +81,21 @@ namespace server
             });
 
             services.AddIdentity<User, Role>()
-             .AddEntityFrameworkStores<DataContext>()
+             .AddUserStore<UserStore>()
+             .AddRoleStore<RoleStore>()
+             .AddUserManager<UserManager>()
+             .AddRoleManager<RoleManager>()
+             .AddSignInManager<SignInManager>()
+             //.AddEntityFrameworkStores<DataContext>()
              .AddDefaultTokenProviders();
+
+            // Identity Services
+            services.AddScoped<IUserStore<User>, UserStore>();
+            services.AddScoped<IRoleStore<Role>, RoleStore>();
+
+            services.AddScoped<UserManager, UserManager>();
+            services.AddScoped<RoleManager, RoleManager>();
+
             // configure DI for application services
             services.AddScoped<IUserService, UserService>();
         }
@@ -100,7 +114,7 @@ namespace server
                 .AllowCredentials());
 
             app.UseAuthentication();
-
+            
             app.UseMvc();
         }
     }
