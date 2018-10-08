@@ -52,7 +52,7 @@ namespace server.Services
 
                 userDto.Id = user.Id;
                 userDto.Dni = user.Dni;
-                userDto.Usuario = user.UserName;
+                userDto.UserName = user.UserName;
                 userDto.PhoneNumber = user.PhoneNumber;
                 userDto.Token = token;
             }
@@ -81,16 +81,18 @@ namespace server.Services
             if (user == null)
                 throw new AppException("User not found");
 
-            if (userParam.Usuario != user.UserName)
+            if (userParam.UserName != user.UserName)
             {
                 // username has changed so check if the new username is already taken
-                if (_context.Users.Any(x => x.UserName == userParam.Usuario))
-                    throw new AppException("El usuario " + userParam.Usuario + " ya existe en la db.");
+                if (_context.Users.Any(x => x.UserName == userParam.UserName))
+                    throw new AppException("El usuario " + userParam.UserName + " ya existe en la db.");
             }
 
             // update user properties
             user.Dni = userParam.Dni;
-            user.UserName = userParam.Usuario;
+            user.UserName = userParam.UserName;
+            user.Email = userParam.UserName;
+            user.PhoneNumber = userParam.PhoneNumber;
 
             // update password if it was entered
             if (!string.IsNullOrWhiteSpace(userParam.Password))

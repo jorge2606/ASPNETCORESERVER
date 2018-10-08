@@ -1,4 +1,6 @@
-﻿using System;
+﻿using server.Models;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace server.Dto
@@ -17,11 +19,18 @@ namespace server.Dto
     {
         public Guid Id { set; get; }
         public int Dni { set; get; }
-        public string Usuario { set; get; }
+        public string UserName { set; get; }
         public string PhoneNumber { set; get; }
         public string Token { get; set; }
     }
 
+    public class ModifyUserDto
+    {
+        public int Dni { set; get; }
+        public string UserName { set; get; }
+        public string PhoneNumber { set; get; }
+        public List<RoleWhenModifyUser> RolesUser { set; get; }
+    }
     public class UserAuthenticationDto
     {
         public string Token { get; set; }

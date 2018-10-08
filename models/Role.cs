@@ -13,4 +13,9 @@ namespace server.Models
         public virtual Guid Id { get; set; }
         public virtual string Name { get; set; }
     }
+
+    public class RoleWhenModifyUser : RoleDto
+    {
+        public virtual bool RolBelongUser { get; set; }
+    }
 }

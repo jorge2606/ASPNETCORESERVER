@@ -92,31 +92,62 @@ namespace server.Controllers
         }
 
         [HttpGet("getbyid/{id}")]
-        //[Route]
         [Authorize]
-        public ActionResult<SaveUserDto> GetById(Guid id)
+        public ActionResult<ModifyUserDto> GetById(Guid id)
         {
             var user = _context.Users.Find(id);
             if (user == null)
             {
                 return null;
             }
+            ModifyUserDto modifyUserDto = new ModifyUserDto {
+                Dni = user.Dni,
+                UserName = user.UserName,
+                PhoneNumber = user.PhoneNumber,
+            };
 
-            return _mapper.Map<SaveUserDto>(user);
+            var RolesUser = _context.UserRoles.ToList();
+            var AllRoles = _context.Roles.ToList();
+
+            List<RoleWhenModifyUser> ListRolesBelongsToUser = new List<RoleWhenModifyUser>(); 
+            foreach (var role in AllRoles)
+            {
+                if (RolesUser.Exists(x=> x.RoleId == role.Id))
+                {
+                    RoleWhenModifyUser roleWhenModifyUser = new RoleWhenModifyUser
+                    {
+                        Id = role.Id,
+                        Name = role.Name,
+                        RolBelongUser = true
+                    };
+
+                    ListRolesBelongsToUser.Add(roleWhenModifyUser);
+                }
+                else
+                {
+                    RoleWhenModifyUser roleWhenModifyUser = new RoleWhenModifyUser
+                    {
+                        Id = role.Id,
+                        Name = role.Name,
+                        RolBelongUser = false
+                    };
+
+                    ListRolesBelongsToUser.Add(roleWhenModifyUser);
+
+                }
+            }
+            modifyUserDto.RolesUser = ListRolesBelongsToUser;
+            return modifyUserDto;
         }
 
         [HttpPut]
         [Authorize]
         public IActionResult Update([FromBody]SaveUserDto userDto)
         {
-            // map dto to entity and set id
-            var user = _mapper.Map<User>(userDto);
-            user.Id = userDto.Id;
-
             try
             {
-                // save 
-                // _userService.Update(user);
+
+                _userService.Update(userDto);
                 return Ok();
             }
             catch (AppException ex)

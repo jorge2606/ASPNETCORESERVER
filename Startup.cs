@@ -17,6 +17,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Identity;
 using server.Identity;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace server
 {
@@ -31,6 +35,7 @@ namespace server
         }
 
         public IConfiguration Configuration { get; }
+
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<Models.DataContext>(options => options.UseSqlServer(Configuration.GetConnectionString("ASPDatabase")));
@@ -39,6 +44,7 @@ namespace server
             services.AddMvc(
                 options => options.Filters.Add(new CorsAuthorizationFilterFactory(_defaultCorsPolicyName))
             );
+
             services.AddAutoMapper();
 
             services.AddCors(
@@ -62,12 +68,8 @@ namespace server
             var appSettingsSection = Configuration.GetSection("AppSettings").GetSection("Secret").Value;
 
             var key = Encoding.ASCII.GetBytes(appSettingsSection);
-            services.AddAuthentication(x =>
-            {
-                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(x =>
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(x =>
             {
                 x.RequireHttpsMetadata = false;
                 x.SaveToken = true;
@@ -76,8 +78,14 @@ namespace server
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = false,
-                    ValidateAudience = false
+                    ValidateAudience = false,
+                    
                 };
+            });
+
+            services.AddAuthorization(options =>
+            {
+                options.DefaultPolicy = new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme).RequireAuthenticatedUser().Build();
             });
 
             services.AddIdentity<User, Role>()
@@ -86,9 +94,9 @@ namespace server
              .AddUserManager<UserManager>()
              .AddRoleManager<RoleManager>()
              .AddSignInManager<SignInManager>()
-             //.AddEntityFrameworkStores<DataContext>()
+             .AddEntityFrameworkStores<DataContext>()
              .AddDefaultTokenProviders();
-
+            
             // Identity Services
             services.AddScoped<IUserStore<User>, UserStore>();
             services.AddScoped<IRoleStore<Role>, RoleStore>();
