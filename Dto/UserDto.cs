@@ -31,6 +31,13 @@ namespace server.Dto
         public string PhoneNumber { set; get; }
         public List<RoleWhenModifyUser> RolesUser { set; get; }
     }
+
+    public class MofidyUserCommingFromClientDto : ModifyUserDto
+    {
+        public Guid Id { get; set; }
+        public string Password { get; set; }
+    }
+
     public class UserAuthenticationDto
     {
         public string Token { get; set; }

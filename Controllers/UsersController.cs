@@ -112,7 +112,7 @@ namespace server.Controllers
             List<RoleWhenModifyUser> ListRolesBelongsToUser = new List<RoleWhenModifyUser>(); 
             foreach (var role in AllRoles)
             {
-                if (RolesUser.Exists(x=> x.RoleId == role.Id))
+                if (RolesUser.Exists(x=> x.UserId == user.Id && x.RoleId == role.Id))
                 {
                     RoleWhenModifyUser roleWhenModifyUser = new RoleWhenModifyUser
                     {
@@ -142,19 +142,10 @@ namespace server.Controllers
 
         [HttpPut]
         [Authorize]
-        public IActionResult Update([FromBody]SaveUserDto userDto)
+        public async Task<IActionResult> Update([FromBody]MofidyUserCommingFromClientDto userDto)
         {
-            try
-            {
-
-                _userService.Update(userDto);
-                return Ok();
-            }
-            catch (AppException ex)
-            {
-                // return error message if there was an exception
-                return BadRequest(new { message = ex.Message });
-            }
+            await _userService.UpdateAsync(userDto);
+            return Ok();
         }
 
         /*     [HttpDelete("{id}")]

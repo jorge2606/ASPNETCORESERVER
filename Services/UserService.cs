@@ -30,6 +30,7 @@ namespace server.Services
         public UserService(DataContext context,
             UserManager userManager, 
             RoleManager roleManager, 
+
             IConfiguration configuration,
             SignInManager signInManager)
         {
@@ -66,15 +67,37 @@ namespace server.Services
             _context.SaveChanges();
         }
 
-        //public async Task UpdateUserRole(Guid idUser, Guid roleId)
-        //{
-        //    var user = await _userManager.FindByIdAsync(idUser)
-        //    //_userRoles.RoleId = roleId;
-        //    //_userRoles.UserId = idUser;
-        //    _userManager.AddToRoleAsync()
-        //}
+        public async Task UpdateUserRoleWhenModify(Guid userId, Guid roleId, bool rolBelongUser)
+        {
 
-        public void Update(SaveUserDto userParam)
+            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            var role = await _roleManager.Roles.FirstOrDefaultAsync(x => x.Id == roleId);
+
+            if (user != null && role != null)
+            {
+                var currentRoles = await _context.UserRoles.FirstOrDefaultAsync(x => x.RoleId == roleId && x.UserId == userId);
+
+                if (currentRoles != null)
+                {
+                    //si el rol existe y esta destildado
+                    if (!rolBelongUser)
+                    {
+                        var result = await _userManager.RemoveFromRoleAsync(user, role.Name);
+                    }
+                }
+                else
+                {
+                    if (rolBelongUser)
+                    {
+                        //no tiene roles por ende se le agrega
+                        var result = await _userManager.AddToRoleAsync(user, role.Name);
+                    }
+                }
+
+            }
+        }
+
+        public async Task UpdateAsync(MofidyUserCommingFromClientDto userParam)
         {
             var user = _context.Users.Find(userParam.Id);
 
@@ -94,6 +117,13 @@ namespace server.Services
             user.Email = userParam.UserName;
             user.PhoneNumber = userParam.PhoneNumber;
 
+            //actualizo los roles del usuario
+            foreach (var role in userParam.RolesUser)
+            {
+                   await UpdateUserRoleWhenModify(user.Id, role.Id, role.RolBelongUser);
+            }
+            
+            
             // update password if it was entered
             if (!string.IsNullOrWhiteSpace(userParam.Password))
             {

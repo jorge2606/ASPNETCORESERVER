@@ -13,7 +13,7 @@ namespace server.IServices
     public interface IUserService
     {
         UserDto Authenticate(string username, string password);
-        void Update(SaveUserDto user);
+        Task UpdateAsync(MofidyUserCommingFromClientDto user);
         void Delete(Guid id);
         Task<ServiceResult<string>> Register(SaveUserDto model);
         Task UpdateUserRole(Guid idUser, Guid id);
