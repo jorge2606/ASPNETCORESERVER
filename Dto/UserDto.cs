@@ -38,6 +38,11 @@ namespace server.Dto
         public string Password { get; set; }
     }
 
+    public class createUserDto : ModifyUserDto
+    {
+        public string Password { get; set; }
+    }
+
     public class UserAuthenticationDto
     {
         public string Token { get; set; }

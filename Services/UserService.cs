@@ -23,13 +23,13 @@ namespace server.Services
         private DataContext _context;
         private UserManager _userManager;
         private readonly RoleManager _roleManager;
-        
+
 
         private readonly SignInManager _signInManager;
 
         public UserService(DataContext context,
-            UserManager userManager, 
-            RoleManager roleManager, 
+            UserManager userManager,
+            RoleManager roleManager,
 
             IConfiguration configuration,
             SignInManager signInManager)
@@ -57,14 +57,24 @@ namespace server.Services
                 userDto.PhoneNumber = user.PhoneNumber;
                 userDto.Token = token;
             }
-                return userDto;
+            return userDto;
         }
 
         public void Delete(Guid id)
         {
-            var user = _context.Users.Find(id);
-            _context.Users.Remove(user);
-            _context.SaveChanges();
+            var userToDelete = _userManager.Users.FirstOrDefault(x => x.Id == id);
+
+            if (userToDelete != null)
+            {
+                //primero remuevo los permisos del usuario
+                var userRoles = _context.UserRoles.ToList();
+                userRoles.RemoveAll(x => x.UserId == id);
+
+                //luego elimino el usuario
+                _context.Users.Remove(userToDelete);
+
+                _context.SaveChanges();
+            }
         }
 
         public async Task UpdateUserRoleWhenModify(Guid userId, Guid roleId, bool rolBelongUser)
@@ -120,18 +130,58 @@ namespace server.Services
             //actualizo los roles del usuario
             foreach (var role in userParam.RolesUser)
             {
-                   await UpdateUserRoleWhenModify(user.Id, role.Id, role.RolBelongUser);
+                await UpdateUserRoleWhenModify(user.Id, role.Id, role.RolBelongUser);
             }
-            
-            
+
+
             // update password if it was entered
             if (!string.IsNullOrWhiteSpace(userParam.Password))
             {
-               user.PasswordHash = _userManager.PasswordHasher.HashPassword(user, userParam.Password);
+                user.PasswordHash = _userManager.PasswordHasher.HashPassword(user, userParam.Password);
             }
 
             _context.Users.Update(user);
             _context.SaveChanges();
+        }
+
+        public async Task<ServiceResult<string>> CreateAsync(createUserDto user)
+        {
+            var NewUser = new User
+            {
+                Id = Guid.NewGuid(),
+                Dni = user.Dni,
+                UserName = user.UserName,
+                Email = user.UserName,
+                PhoneNumber = user.PhoneNumber
+            };
+
+            var userExistOrNot = await _userManager.FindByNameAsync(user.UserName);
+
+            if (userExistOrNot != null)
+            {
+                var result = await _userManager.CreateAsync(NewUser, user.Password);
+
+                if (!result.Succeeded)
+                {
+                    return result.ToServiceResult<string>(null);
+                }
+            }
+
+            // update password if it was entered
+            if (!string.IsNullOrWhiteSpace(user.Password))
+            {
+                NewUser.PasswordHash = _userManager.PasswordHasher.HashPassword(NewUser, user.Password);
+            }
+
+            await _userManager.CreateAsync(NewUser);
+
+            //actualizo los roles del usuario
+            foreach (var role in user.RolesUser)
+            {
+                await UpdateUserRoleWhenModify(NewUser.Id, role.Id, role.RolBelongUser);
+            }
+
+            return new ServiceResult<string>(NewUser.ToString());
         }
 
         //Create JWToken
@@ -161,7 +211,7 @@ namespace server.Services
 
             return Token;
         }
-        
+
         public async Task<ServiceResult<string>> Register(SaveUserDto model)
         {
             var user = new User
@@ -173,7 +223,7 @@ namespace server.Services
                 PhoneNumber = model.PhoneNumber
             };
 
-            var result = await _userManager.CreateAsync(user,model.Password);
+            var result = await _userManager.CreateAsync(user, model.Password);
 
             if (!result.Succeeded)
             {
@@ -183,14 +233,14 @@ namespace server.Services
             await _signInManager.SignInAsync(user, false);
 
             var token = GenerateJwtTokenHandler(model.Email, user);
-             
+
             return new ServiceResult<string>(token);
 
         }
 
         public async Task UpdateUserRole(Guid userId, Guid roleId)
         {
-            
+
             var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
             var role = await _roleManager.Roles.FirstOrDefaultAsync(x => x.Id == roleId);
 

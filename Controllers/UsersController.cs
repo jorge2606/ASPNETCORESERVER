@@ -46,14 +46,15 @@ namespace server.Controllers
         }
 
         [HttpPost]
-        public void Save([FromBody]SaveUserDto userDto)
+        public async Task<IActionResult> Save([FromBody]createUserDto createUser)
         {
-            _context.Users.Add(new User
+            var newUser = await _userService.CreateAsync(createUser);
+
+            if (!newUser.IsSuccess)
             {
-                Id = Guid.NewGuid(),
-                Dni = userDto.Dni
-            });
-            _context.SaveChanges();
+                return BadRequest(newUser);
+            }
+            return Ok(newUser);
         }
 
         [HttpPost("Auth")]
@@ -100,7 +101,8 @@ namespace server.Controllers
             {
                 return null;
             }
-            ModifyUserDto modifyUserDto = new ModifyUserDto {
+            ModifyUserDto modifyUserDto = new ModifyUserDto
+            {
                 Dni = user.Dni,
                 UserName = user.UserName,
                 PhoneNumber = user.PhoneNumber,
@@ -109,10 +111,10 @@ namespace server.Controllers
             var RolesUser = _context.UserRoles.ToList();
             var AllRoles = _context.Roles.ToList();
 
-            List<RoleWhenModifyUser> ListRolesBelongsToUser = new List<RoleWhenModifyUser>(); 
+            List<RoleWhenModifyUser> ListRolesBelongsToUser = new List<RoleWhenModifyUser>();
             foreach (var role in AllRoles)
             {
-                if (RolesUser.Exists(x=> x.UserId == user.Id && x.RoleId == role.Id))
+                if (RolesUser.Exists(x => x.UserId == user.Id && x.RoleId == role.Id))
                 {
                     RoleWhenModifyUser roleWhenModifyUser = new RoleWhenModifyUser
                     {
@@ -148,35 +150,35 @@ namespace server.Controllers
             return Ok();
         }
 
-        /*     [HttpDelete("{id}")]
-             [Authorize]
-             public IActionResult Delete(Guid id)
-             {
-                 _userService.Delete(id);
-                 return Ok();
-             }
-             */
-             public IQueryable<User> queryableUser()
-             {
-                 var usersPaginator = _context.Users.OrderBy(x => x.UserName);
-                 return usersPaginator;
-             }
-             
-             [HttpGet("page/{page}")]
-             public PagedResult<User> userPagination(int? page)
-             {
-                 const int pageSize = 2;
-                 var queryPaginator = queryableUser();
+        [HttpDelete("{id}")]
+        [Authorize]
+        public IActionResult Delete(Guid id)
+        {
+            _userService.Delete(id);
+            return Ok();
+        }
 
-                 var result = queryPaginator.Skip((page ?? 0) * pageSize)
-                                               .Take(pageSize)
-                                               .ToList();
-                 return new PagedResult<User>
-                 {
-                     List = result,
-                     TotalRecords = queryPaginator.Count()
-                 };
-             }
+        public IQueryable<User> queryableUser()
+        {
+            var usersPaginator = _context.Users.OrderBy(x => x.UserName);
+            return usersPaginator;
+        }
+
+        [HttpGet("page/{page}")]
+        public PagedResult<User> userPagination(int? page)
+        {
+            const int pageSize = 10;
+            var queryPaginator = queryableUser();
+
+            var result = queryPaginator.Skip((page ?? 0) * pageSize)
+                                          .Take(pageSize)
+                                          .ToList();
+            return new PagedResult<User>
+            {
+                List = result,
+                TotalRecords = queryPaginator.Count()
+            };
+        }
     }
 
 }

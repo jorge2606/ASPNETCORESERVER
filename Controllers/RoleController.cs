@@ -36,6 +36,27 @@ namespace server.Controllers
             return _roleManager.Roles.Select(_mapper.Map<RoleDto>).ToList();
         }
 
+        [HttpGet("getAll")]
+        [AllowAnonymous]
+        public ActionResult<List<RoleWhenModifyUser>> getAll()
+        {
+            var roles = _roleManager.Roles.Select(_mapper.Map<Role>).ToList();
+
+            List<RoleWhenModifyUser> roleWhenModifyUser = new List<RoleWhenModifyUser>();
+            foreach (var rol in roles)
+            {
+                roleWhenModifyUser.Add(
+                    new RoleWhenModifyUser()
+                    {
+                        Id = rol.Id,
+                        Name = rol.Name,
+                        RolBelongUser = false
+                    }
+                );
+            }
+            return roleWhenModifyUser;
+        }
+
         [HttpGet("getallClaims")]
         [AllowAnonymous]
         public async Task<ActionResult<List<RoleClaimPermissionDto>>> GetAllRoleClaims(Guid id)
